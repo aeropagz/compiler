@@ -4,9 +4,9 @@ import java.io.*;
 import java.util.*;
 
 public class Lexer {
+    private final Hashtable words = new Hashtable();
     public int line = 1;
     private char peek = ' ';
-    private Hashtable words = new Hashtable();
 
     public Lexer() {
         this.reserve(new Word(Tag.TRUE, "true"));
@@ -19,6 +19,7 @@ public class Lexer {
             else if (peek == '\n') this.line++;
             else break;
         }
+
         if (Character.isDigit(peek)) {
             int v = 0;
             do {
@@ -37,7 +38,7 @@ public class Lexer {
             Word w = (Word) words.get(s);
             if (w != null) return w;
             w = new Word(Tag.ID, s);
-            words.put(s,w);
+            words.put(s, w);
             return w;
         }
         Token t = new Token(peek);
