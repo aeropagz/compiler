@@ -1,0 +1,52 @@
+package lexer;
+
+import java.io.*;
+import java.util.*;
+
+public class Lexer {
+    private final Hashtable words = new Hashtable();
+    public int line = 1;
+    private char peek = ' ';
+
+    public Lexer() {
+        this.reserve(new Word(Tag.TRUE, "true"));
+        this.reserve(new Word(Tag.FALSE, "false"));
+    }
+
+    public Token scan() throws IOException {
+        for (; ; peek = (char) System.in.read()) {
+            if (peek == ' ' || peek == '\t') continue;
+            else if (peek == '\n') this.line++;
+            else break;
+        }
+
+        if (Character.isDigit(peek)) {
+            int v = 0;
+            do {
+                v = 10 * v + Character.digit(peek, 10);
+                peek = (char) System.in.read();
+            } while (Character.isDigit(peek));
+            return new Num(v);
+        }
+        if (Character.isLetter(peek)) {
+            StringBuffer b = new StringBuffer();
+            do {
+                b.append(peek);
+                peek = (char) System.in.read();
+            } while (Character.isLetter(peek));
+            String s = b.toString();
+            Word w = (Word) words.get(s);
+            if (w != null) return w;
+            w = new Word(Tag.ID, s);
+            words.put(s, w);
+            return w;
+        }
+        Token t = new Token(peek);
+        peek = ' ';
+        return t;
+    }
+
+    void reserve(Word t) {
+        words.put(t.lexeme, t);
+    }
+}
