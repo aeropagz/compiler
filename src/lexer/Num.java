@@ -7,4 +7,8 @@ public class Num extends Token{
         super(Tag.NUM);
         this.value = v;
     }
+
+    public String toString(){
+        return "" + value;
+    }
 }

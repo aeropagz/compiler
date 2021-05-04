@@ -1,43 +1,115 @@
 package lexer;
 
+import symbols.Type;
+
 import java.io.*;
 import java.util.*;
 
 public class Lexer {
-    private final Hashtable words = new Hashtable();
-    public int line = 1;
+    private final Hashtable<String, Word> words = new Hashtable<>();
+    public static int line = 1;
     private char peek = ' ';
 
     public Lexer() {
-        this.reserve(new Word(Tag.TRUE, "true"));
-        this.reserve(new Word(Tag.FALSE, "false"));
+        reserve(new Word("if", Tag.IF));
+        reserve(new Word("else", Tag.ELSE));
+        reserve(new Word("while", Tag.WHILE));
+        reserve(new Word("do", Tag.DO));
+        reserve(new Word("break", Tag.BREAK));
+
+        reserve(Word.True);
+        reserve(Word.False);
+
+        reserve(Type.Int);
+        reserve(Type.Char);
+        reserve(Type.Bool);
+        reserve(Type.Float);
+    }
+
+    void readch() throws IOException {
+        peek = (char) System.in.read();
+    }
+
+    boolean readch(char c) throws IOException {
+        readch();
+        if (peek != c)
+            return false;
+        peek = ' ';
+        return true;
     }
 
     public Token scan() throws IOException {
-        for (; ; peek = (char) System.in.read()) {
-            if (peek == ' ' || peek == '\t') continue;
-            else if (peek == '\n') this.line++;
-            else break;
+        for (; ; readch()) {
+            if (peek == ' ' || peek == '\t')
+                continue;
+            else if (peek == '\n')
+                line++;
+            else
+                break;
+        }
+
+        switch (peek) {
+            case '&':
+                if (readch('&'))
+                    return Word.and;
+                else
+                    return new Token('&');
+            case '|':
+                if (readch('|'))
+                    return Word.or;
+                else
+                    return new Token('|');
+            case '=':
+                if (readch('='))
+                    return Word.eq;
+                else
+                    return new Token('=');
+            case '!':
+                if (readch('='))
+                    return Word.ne;
+                else
+                    return new Token('!');
+            case '<':
+                if (readch('='))
+                    return Word.le;
+                else
+                    return new Token('<');
+            case '>':
+                if (readch('='))
+                    return Word.ge;
+                else
+                    return new Token('>');
         }
 
         if (Character.isDigit(peek)) {
             int v = 0;
             do {
                 v = 10 * v + Character.digit(peek, 10);
-                peek = (char) System.in.read();
+                readch();
             } while (Character.isDigit(peek));
-            return new Num(v);
+            if (peek != '.')
+                return new Num(v);
+            float x = v;
+            float d = 10;
+            while (true) {
+                readch();
+                if (!Character.isDigit(peek))
+                    break;
+                x = x + Character.digit(peek, 10) / d;
+                d = d * 10;
+            }
+            return new Real(x);
         }
         if (Character.isLetter(peek)) {
             StringBuffer b = new StringBuffer();
             do {
                 b.append(peek);
-                peek = (char) System.in.read();
-            } while (Character.isLetter(peek));
+                readch();
+            } while (Character.isLetterOrDigit(peek));
             String s = b.toString();
-            Word w = (Word) words.get(s);
+            Word w = words.get(s);
             if (w != null) return w;
-            w = new Word(Tag.ID, s);
+            w = new Word(s, Tag.ID);
             words.put(s, w);
             return w;
         }
@@ -46,7 +118,7 @@ public class Lexer {
         return t;
     }
 
-    void reserve(Word t) {
-        words.put(t.lexeme, t);
+    void reserve(Word w) {
+        words.put(w.lexeme, w);
     }
 }
